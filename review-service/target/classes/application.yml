@@ -1,0 +1,33 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: review-service
+
+  datasource:
+    url: jdbc:h2:mem:reviewdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+# -------------------------------------------------------
+# Groq API Key — REQUIRED for AI code review to work
+# Get your key from: https://console.groq.com
+# The old key was expired/invalid (caused 400 BAD_REQUEST)
+# Replace the value below with your fresh key
+# -------------------------------------------------------
+groq:
+  api:
+    key: "${GROQ_API_KEY: }"

@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CodeLens</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #111118;
+            --card: #16161f;
+            --border: #1e1e2e;
+            --accent: #00ff88;
+            --accent2: #0066ff;
+            --accent3: #ff3366;
+            --text: #e0e0f0;
+            --muted: #5a5a7a;
+            --warn: #ffaa00;
+            --high: #ff3366;
+            --medium: #ffaa00;
+            --low: #00ff88;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Syne', sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            height: 100vh;
+            position: fixed;
+            left: 0; top: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--accent);
+        }
+
+        .sidebar-logo span { color: var(--text); }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(0,102,255,0.1);
+            color: var(--text);
+            border-left: 2px solid var(--accent2);
+        }
+
+        .nav-item i { width: 18px; text-align: center; }
+
+        .sidebar-user {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .user-avatar {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: white;
+        }
+
+        /* Main content */
+        .main {
+            margin-left: 240px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .page-header p { color: var(--muted); font-size: 0.9rem; }
+
+        /* Stats cards */
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+        }
+
+        .stat-card.reviews::after { background: var(--accent2); }
+        .stat-card.score::after { background: var(--accent); }
+        .stat-card.rating::after { background: var(--warn); }
+        .stat-card.language::after { background: #cc88ff; }
+
+        .stat-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        /* Code input area */
+        .review-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface);
+        }
+
+        .panel-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-dot {
+            width: 8px; height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .lang-select {
+            background: var(--bg) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text) !important;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+
+        .code-textarea {
+            background: var(--bg) !important;
+            border: none !important;
+            color: #a0a0c0 !important;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            padding: 1.5rem;
+            resize: vertical;
+            min-height: 240px;
+            width: 100%;
+            outline: none;
+        }
+
+        .code-textarea::placeholder { color: var(--muted) !important; }
+
+        .panel-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .char-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        .btn-analyze {
+            background: linear-gradient(135deg, var(--accent2), #0044cc);
+            border: none;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0,102,255,0.4);
+        }
+
+        .btn-analyze:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Results */
+        .result-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .score-ring-wrap {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .score-ring {
+            width: 80px; height: 80px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .score-ring svg { transform: rotate(-90deg); }
+
+        .score-ring circle {
+            fill: none;
+            stroke-width: 6;
+        }
+
+        .score-ring .bg { stroke: var(--border); }
+        .score-ring .fg { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+
+        .score-number {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: 800;
+            font-size: 1.2rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .result-summary { font-size: 0.9rem; line-height: 1.6; color: var(--muted); }
+        .result-summary strong { color: var(--text); }
+
+        .issue-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .badge-high { background: rgba(255,51,102,0.15); color: var(--high); border: 1px solid rgba(255,51,102,0.3); }
+        .badge-medium { background: rgba(255,170,0,0.15); color: var(--warn); border: 1px solid rgba(255,170,0,0.3); }
+        .badge-low { background: rgba(0,255,136,0.15); color: var(--accent); border: 1px solid rgba(0,255,136,0.3); }
+
+        .issue-card {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+
+        .issue-card:hover { background: rgba(255,255,255,0.02); }
+        .issue-card:last-child { border-bottom: none; }
+
+        .issue-type {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .issue-desc { font-size: 0.88rem; margin: 4px 0; }
+        .issue-hint { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--muted); }
+
+        .suggestion-item {
+            display: flex;
+            gap: 12px;
+            padding: 0.8rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.88rem;
+        }
+
+        .suggestion-item:last-child { border-bottom: none; }
+        .suggestion-num {
+            width: 24px; height: 24px;
+            background: rgba(0,102,255,0.2);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--accent2);
+            flex-shrink: 0;
+        }
+
+        /* Rating stars */
+        .star-rating {
+            display: flex;
+            gap: 4px;
+        }
+
+        .star {
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--border);
+            transition: color 0.1s;
+        }
+
+        .star.active, .star:hover { color: var(--warn); }
+
+        /* Loading overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10,10,15,0.85);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .loading-overlay.show { display: flex; }
+
+        .loading-spinner {
+            width: 48px; height: 48px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent2);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-text {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .section-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            padding: 1rem 1.5rem 0.5rem;
+        }
+
+        .btn-logout {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-logout:hover { border-color: var(--accent3); color: var(--accent3); }
+    </style>
+</head>
+<body>
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Analyzing your code with AI...</div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">CodeLens<span>AI</span></div>
+        <nav class="sidebar-nav">
+            <a class="nav-item active" onclick="showSection('review')">
+                <i class="fas fa-code"></i> Code Review
+            </a>
+            <a class="nav-item" onclick="window.location.href='/history'">
+                <i class="fas fa-history"></i> History
+            </a>
+            <a class="nav-item" onclick="showSection('analytics')">
+                <i class="fas fa-chart-bar"></i> Analytics
+            </a>
+        </nav>
+        <div class="sidebar-user">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="user-avatar" id="userAvatar">SP</div>
+                <div>
+                    <div style="font-size:0.85rem;font-weight:600" id="userName">Loading...</div>
+                    <div style="font-size:0.72rem;color:var(--muted)">Developer</div>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt me-1"></i>Logout</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        <!-- Review Section -->
+        <div id="reviewSection">
+            <div class="page-header">
+                <h1>Code Review</h1>
+                <p>Paste your code below and get an instant AI-powered analysis</p>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="row g-3 mb-4" id="statsRow">
+                <div class="col-md-3">
+                    <div class="stat-card reviews">
+                        <div class="stat-label">Total Reviews</div>
+                        <div class="stat-value" id="statTotal">—</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card score">
+                        <div class="stat-label">Avg Score</div>
+                        <div class="stat-value" id="statScore">—</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card rating">
+                        <div class="stat-label">Avg Rating</div>
+                        <div class="stat-value" id="statRating">—</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card language">
+                        <div class="stat-label">Top Language</div>
+                        <div class="stat-value" style="font-size:1.2rem" id="statLang">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Code Input -->
+            <div class="review-panel mb-4">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-dot"></div>
+                        code-input.java
+                    </div>
+                    <select class="lang-select" id="language">
+                        <option value="Java">Java</option>
+                        <option value="Python">Python</option>
+                        <option value="JavaScript">JavaScript</option>
+                        <option value="C++">C++</option>
+                        <option value="TypeScript">TypeScript</option>
+                        <option value="Go">Go</option>
+                        <option value="SQL">SQL</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <textarea class="code-textarea" id="codeInput"
+                    placeholder="// Paste your code here...
+// Example:
+public String getUserData(String userId) {
+    String query = 'SELECT * FROM users WHERE id = ' + userId;
+    return db.execute(query);
+}"
+                    oninput="updateCharCount()"></textarea>
+                <div class="panel-footer">
+                    <div class="char-count" id="charCount">0 characters</div>
+                    <button class="btn-analyze" onclick="analyzeCode()" id="analyzeBtn">
+                        <i class="fas fa-robot"></i>
+                        Analyze Code
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="result-panel" id="resultPanel">
+                <!-- Score & Summary -->
+                <div class="score-ring-wrap">
+                    <div class="score-ring">
+                        <svg width="80" height="80" viewBox="0 0 80 80">
+                            <circle class="bg" cx="40" cy="40" r="34"/>
+                            <circle class="fg" id="scoreCircle" cx="40" cy="40" r="34"
+                                stroke-dasharray="213.6"
+                                stroke-dashoffset="213.6"/>
+                        </svg>
+                        <div class="score-number" id="scoreNumber">0</div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div style="font-weight:700;margin-bottom:8px">Overall Score</div>
+                        <div class="result-summary" id="resultSummary">—</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:6px;font-family:'JetBrains Mono',monospace">Rate this review</div>
+                        <div class="star-rating" id="starRating">
+                            <span class="star" onclick="rateReview(1)">★</span>
+                            <span class="star" onclick="rateReview(2)">★</span>
+                            <span class="star" onclick="rateReview(3)">★</span>
+                            <span class="star" onclick="rateReview(4)">★</span>
+                            <span class="star" onclick="rateReview(5)">★</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Issues -->
+                <div class="section-title">Issues Found</div>
+                <div id="issuesList"></div>
+
+                <!-- Suggestions -->
+                <div class="section-title">Improvement Suggestions</div>
+                <div id="suggestionsList"></div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div id="analyticsSection" style="display:none">
+            <div class="page-header">
+                <h1>Analytics</h1>
+                <p>Your code quality trends over time</p>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="stat-card reviews" style="padding:2rem">
+                        <div class="stat-label mb-3">Total Reviews Submitted</div>
+                        <div class="stat-value" id="analyticsTotal" style="font-size:3rem">—</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="stat-card score" style="padding:2rem">
+                        <div class="stat-label mb-3">Average Code Quality Score</div>
+                        <div class="stat-value" id="analyticsScore" style="font-size:3rem">—</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="stat-card rating" style="padding:2rem">
+                        <div class="stat-label mb-3">Average Review Rating</div>
+                        <div class="stat-value" id="analyticsRating" style="font-size:3rem">—</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="stat-card language" style="padding:2rem">
+                        <div class="stat-label mb-3">Most Reviewed Language</div>
+                        <div class="stat-value" id="analyticsLang" style="font-size:2rem">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const AUTH_API = 'http://localhost:8080'; const API = 'http://localhost:8080';
+        let token = localStorage.getItem('token');
+        let currentReviewId = null;
+
+        if (!token) window.location.href = '/';
+
+        // Init
+        const userName = localStorage.getItem('userName') || 'User';
+        document.getElementById('userName').textContent = userName;
+        document.getElementById('userAvatar').textContent = userName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+        loadAnalytics();
+
+        function showSection(section) {
+            document.getElementById('reviewSection').style.display = section === 'review' ? 'block' : 'none';
+            document.getElementById('analyticsSection').style.display = section === 'analytics' ? 'block' : 'none';
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.target.closest('.nav-item').classList.add('active');
+            if (section === 'analytics') loadAnalytics();
+        }
+
+        function updateCharCount() {
+            const len = document.getElementById('codeInput').value.length;
+            document.getElementById('charCount').textContent = `${len} characters`;
+        }
+
+        async function loadAnalytics() {
+            try {
+                const res = await fetch(`${API}/api/reviews/analytics`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                document.getElementById('statTotal').textContent = data.totalReviews ?? 0;
+                document.getElementById('statScore').textContent = data.averageScore ? Math.round(data.averageScore) : '—';
+                document.getElementById('statRating').textContent = data.averageRating ? data.averageRating.toFixed(1) : '—';
+                document.getElementById('statLang').textContent = data.mostReviewedLanguage || '—';
+
+                document.getElementById('analyticsTotal').textContent = data.totalReviews ?? 0;
+                document.getElementById('analyticsScore').textContent = data.averageScore ? Math.round(data.averageScore) : '—';
+                document.getElementById('analyticsRating').textContent = data.averageRating ? data.averageRating.toFixed(1) + ' / 5' : '—';
+                document.getElementById('analyticsLang').textContent = data.mostReviewedLanguage || '—';
+            } catch (e) { console.error('Analytics error:', e); }
+        }
+
+        async function analyzeCode() {
+            const code = document.getElementById('codeInput').value.trim();
+            const language = document.getElementById('language').value;
+
+            if (!code) return alert('Please paste some code first');
+
+            document.getElementById('loadingOverlay').classList.add('show');
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('resultPanel').style.display = 'none';
+
+            try {
+                const res = await fetch(`${API}/api/reviews`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ codeSnippet: code, language })
+                });
+
+                if (res.status === 401) { logout(); return; }
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Analysis failed');
+
+                currentReviewId = data.id;
+                renderResult(data);
+                loadAnalytics();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                document.getElementById('loadingOverlay').classList.remove('show');
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        }
+
+        function renderResult(data) {
+            // Score ring
+            const score = data.overallScore || 0;
+            const circumference = 213.6;
+            const offset = circumference - (score / 100) * circumference;
+            document.getElementById('scoreCircle').style.strokeDashoffset = offset;
+
+            const fg = document.getElementById('scoreCircle');
+            if (score >= 70) fg.style.stroke = '#00ff88';
+            else if (score >= 40) fg.style.stroke = '#ffaa00';
+            else fg.style.stroke = '#ff3366';
+
+            document.getElementById('scoreNumber').textContent = score;
+            document.getElementById('resultSummary').innerHTML = data.summary || 'Review complete.';
+
+            // Issues
+            const issuesList = document.getElementById('issuesList');
+            if (data.issues && data.issues.length > 0) {
+                issuesList.innerHTML = data.issues.map(issue => `
+                    <div class="issue-card">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="issue-badge badge-${issue.severity?.toLowerCase() || 'low'}">${issue.severity || 'LOW'}</span>
+                            <span class="issue-type">${issue.type || ''}</span>
+                        </div>
+                        <div class="issue-desc">${issue.description}</div>
+                        ${issue.lineHint ? `<div class="issue-hint"><i class="fas fa-map-pin me-1"></i>${issue.lineHint}</div>` : ''}
+                    </div>
+                `).join('');
+            } else {
+                issuesList.innerHTML = '<div class="issue-card" style="color:var(--accent)"><i class="fas fa-check-circle me-2"></i>No major issues found!</div>';
+            }
+
+            // Suggestions
+            const suggList = document.getElementById('suggestionsList');
+            if (data.suggestions && data.suggestions.length > 0) {
+                suggList.innerHTML = data.suggestions.map((s, i) => `
+                    <div class="suggestion-item">
+                        <div class="suggestion-num">${i + 1}</div>
+                        <div>${s}</div>
+                    </div>
+                `).join('');
+            } else {
+                suggList.innerHTML = '<div class="suggestion-item" style="color:var(--muted)">No suggestions available.</div>';
+            }
+
+            // Reset stars
+            document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+
+            document.getElementById('resultPanel').style.display = 'block';
+            document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        async function rateReview(rating) {
+            if (!currentReviewId) return;
+            const stars = document.querySelectorAll('.star');
+            stars.forEach((s, i) => s.classList.toggle('active', i < rating));
+
+            try {
+                await fetch(`${API}/api/reviews/${currentReviewId}/rate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ rating })
+                });
+                loadAnalytics();
+            } catch (e) { console.error('Rating error:', e); }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

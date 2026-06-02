@@ -1,0 +1,3 @@
+com\codereview\gateway\JwtAuthFilter$Config.class
+com\codereview\gateway\JwtAuthFilter.class
+com\codereview\gateway\ApiGatewayApplication.class

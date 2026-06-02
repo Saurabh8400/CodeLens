@@ -1,0 +1,15 @@
+com\codereview\review\config\ReviewServiceConfig.class
+com\codereview\review\ReviewServiceApplication.class
+com\codereview\review\dto\ReviewDto$AnalyticsResponse.class
+com\codereview\review\service\AiReviewService.class
+com\codereview\review\model\Review$ReviewStatus.class
+com\codereview\review\dto\ReviewDto$Issue.class
+com\codereview\review\service\ReviewService.class
+com\codereview\review\model\Review.class
+com\codereview\review\dto\ReviewDto$ReviewResponse.class
+com\codereview\review\dto\ReviewDto$RatingRequest.class
+com\codereview\review\dto\ReviewDto.class
+com\codereview\review\dto\ReviewDto$ReviewRequest.class
+com\codereview\review\controller\ReviewController.class
+com\codereview\review\repository\ReviewRepository.class
+com\codereview\review\service\AiReviewService$AiReviewResult.class

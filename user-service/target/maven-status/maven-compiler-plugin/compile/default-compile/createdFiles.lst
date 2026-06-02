@@ -1,0 +1,12 @@
+com\codereview\user\dto\UserDto$UserProfileResponse.class
+com\codereview\user\service\UserService.class
+com\codereview\user\config\JwtService.class
+com\codereview\user\controller\UserController.class
+com\codereview\user\dto\UserDto.class
+com\codereview\user\dto\UserDto$RegisterRequest.class
+com\codereview\user\UserServiceApplication.class
+com\codereview\user\dto\UserDto$AuthResponse.class
+com\codereview\user\dto\UserDto$LoginRequest.class
+com\codereview\user\repository\UserRepository.class
+com\codereview\user\config\SecurityConfig.class
+com\codereview\user\model\User.class
